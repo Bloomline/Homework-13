@@ -167,25 +167,6 @@
       fill(obs.color);
       rect(obs.x, obs.y, obs.w, obs.h, 8);
     }
-    function moveObstacle1() {
-      let obs = obstacles[0];
-      obs.x += obs.dx;
-      obs.y += obs.dy * 0.8;
-      // Wrap around
-      if (obs.x > width) obs.x = -obs.w;
-      else if (obs.x + obs.w < 0) obs.x = width;
-      if (obs.y > height) obs.y = -obs.h;
-      else if (obs.y + obs.h < 0) obs.y = height;
-    }
-    function moveObstacle2() {
-      let obs = obstacles[1];
-      obs.x -= obs.dx * 0.8;
-      obs.y += obs.dy * 1.3;
-      // Wrap around
-      if (obs.x > width) obs.x = -obs.w;
-      else if (obs.x + obs.w < 0) obs.x = width;
-      if (obs.y > height) obs.y = -obs.h;
-    }
     function moveObstacle(obs) {
       obs.x += obs.dx;
       obs.y += obs.dy;
