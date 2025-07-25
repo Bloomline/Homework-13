@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Amélie Anomaly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"></script>
+  <style>
+    body { background: #10152c; color: #eaeaff; font-family: 'Segoe UI', sans-serif; }
+    h1 { text-align: center; color: #79e6ff; margin-top: 18px; }
+    h2 { text-align: center}
+    #game { display: flex; justify-content: center; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Amélie Anomaly</h1>
+  <div id="game"></div>
+  <script>
+    // --- GLOBAL STATE ---
+    let player, playerSpeed;
+    let obstacles = [];
+    let staticObjects = [];
+    let exit;
+    let won = false;
+
+    // SETUP
+    function setup() {
+      let cnv = createCanvas(640, 420);
+      cnv.parent("game");
+      player = createPlayer();
+      playerSpeed = 3.3;
+
+      // obstacles
+    obstacles = [];
+    for (let i = 0; i < 5; i++) {
+      obstacles.push(createObstacle(
+        random(60, width-120), random(60, height-60),
+        random(30, 80), random(24, 56),
+        color(random(70,255), random(70,255), random(70,255))
+      ));
+    }
+
+      // Exit object
+      exit = createExit();
+
+      // No win at start
+      won = false;
+    }
+
+    // Main Loop
+    function draw() {
+      background(22, 16, 43);
+      drawBorder();
+      drawExit();
+
+      for (let obs of obstacles) {
+      moveObstacle1();
+      moveObstacle2();
+      }
+      drawObstacle(obstacles[0]);
+      drawObstacle(obstacles[1]);
+
+      for (let obj of staticObjects) drawStaticObject(obj);
+
+      movePlayer();
+      drawPlayer();
+
+      if (playerInExit()) {
+        won = true;
+        showWinMessage();
+      }
+    }
+
+    // PLAYER FUNCTIONS
+    function createPlayer() {
+      return {
+        x: 55,
+        y: height/2,
+        r: 26
+      };
+    }
+
+    function drawPlayer() {
+      // Amélie! — face
+      push();
+      translate(player.x, player.y);
+
+      // Hair (blue ellipse)
+      noStroke();
+      fill(80,180,255);
+      ellipse(0, -9, 56, 64);
+      ellipse(-16, -13, 23, 45);
+      ellipse(16, -13, 23, 45);
+
+      // Face
+      fill(240,220,200);
+      ellipse(0, 0, 38, 42);
+
+      // Blush
+      fill(178,220,255,110);
+      ellipse(-12, 8, 10, 7);
+      ellipse(12, 8, 10, 7);
+
+      // Eyes
+      fill(45,55,120);
+      ellipse(-7, -4, 9, 9);
+      ellipse(7, -4, 9, 9);
+      fill(255); ellipse(-5, -6, 2, 2); ellipse(9, -7, 2, 2);
+
+      // Smile
+      stroke(110,80,160);
+      strokeWeight(2);
+      noFill();
+      arc(0, 6, 18, 8, 0, PI);
+
+      // Headband
+      noStroke();
+      fill(255,150,200,140);
+      rect(-15,-16,30,6,3);
+
+      // Body
+      fill(140,200,255);
+      rect(-12,20,24,19,8);
+
+      pop();
+    }
+
+    function movePlayer() {
+      if (!won) {
+        if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.x -= playerSpeed;
+        if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += playerSpeed;
+        if (keyIsDown(UP_ARROW) || keyIsDown(87)) player.y -= playerSpeed;
+        if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) player.y += playerSpeed;
+      }
+      // Keep player inside
+      player.x = constrain(player.x, player.r+6, width-player.r-6);
+      player.y = constrain(player.y, player.r+6, height-player.r-6);
+    }
+
+    // STATIC OBJECT FUNCTIONS
+    function mousePressed() {
+      staticObjects.push({
+        x: mouseX - 25,
+        y: mouseY - 20,
+        w: 35 + random(-10, 24),
+        h: 40 + random(-8, 18),
+        color: color(random(180,255), random(90,220), random(180,255))
+      });
+    }
+    function drawStaticObject(obj) {
+      fill(obj.color);
+      rect(obj.x, obj.y, obj.w, obj.h, 8);
+    }
+
+    // OBSTACLE FUNCTIONS
+    function createObstacle(x, y, w, h, col) {
+      // starting speed and direction
+      return {
+        x: x, y: y, w: w, h: h,
+        dx: random([-2, 2, 1.2, -1.8, 2.7, -2.1]),
+        dy: random([-1.3, 2, -2, 1.6, 1.8, -1.4]),
+        color: col
+      };
+    }
+    
+    function drawObstacle(obs) {
+      fill(obs.color);
+      rect(obs.x, obs.y, obs.w, obs.h, 8);
+    }
+    function moveObstacle1() {
+      let obs = obstacles[0];
+      obs.x += obs.dx;
+      obs.y += obs.dy * 0.8;
+      // Wrap around
+      if (obs.x > width) obs.x = -obs.w;
+      else if (obs.x + obs.w < 0) obs.x = width;
+      if (obs.y > height) obs.y = -obs.h;
+      else if (obs.y + obs.h < 0) obs.y = height;
+    }
+    function moveObstacle2() {
+      let obs = obstacles[1];
+      obs.x -= obs.dx * 0.8;
+      obs.y += obs.dy * 1.3;
+      // Wrap around
+      if (obs.x > width) obs.x = -obs.w;
+      else if (obs.x + obs.w < 0) obs.x = width;
+      if (obs.y > height) obs.y = -obs.h;
+    }
+    function moveObstacle(obs) {
+      obs.x += obs.dx;
+      obs.y += obs.dy;
+      // Wrap around (screen torus)
+      if (obs.x > width) obs.x = -obs.w;
+      else if (obs.x + obs.w < 0) obs.x = width;
+      if (obs.y > height) obs.y = -obs.h;
+      else if (obs.y + obs.h < 0) obs.y = height;
+    }
+
+    // BORDER
+    function drawBorder() {
+      stroke(180,245,255,180);
+      strokeWeight(6);
+      noFill();
+      rect(0,0,width,height,22);
+      noStroke();
+    }
+
+    // EXIT
+    function createExit() {
+      return {
+        x: width-60, y: height/2-46, w: 36, h: 92, color: color(255,180,120)
+      };
+    }
+    function drawExit() {
+      fill(exit.color);
+      rect(exit.x, exit.y, exit.w, exit.h, 14);
+      fill(250,245,170);
+      textAlign(CENTER, CENTER);
+      textSize(18);
+      text("EXIT", exit.x + exit.w/2, exit.y + exit.h/2);
+    }
+
+    // WIN
+    function playerInExit() {
+      return (
+        player.x + player.r > exit.x && player.x - player.r < exit.x + exit.w &&
+        player.y + player.r > exit.y && player.y - player.r < exit.y + exit.h
+      );
+    }
+    function showWinMessage() {
+      fill(255,202,255);
+      textAlign(CENTER, CENTER);
+      textSize(32);
+      text("You Win, Amélie! 💙", width/2, height/2);
+    }
+  </script>
+  <div class="center" style="color:#b6f2ff;margin-top:12px;">
+      <h2>Use arrow keys or WASD to move Amélie.</h2>
+      <h2>Click to add a pastel obstacle.</h2>
+      <h2>Touch the exit to win!</h2>
+  </div>
+</body>
+</html>
